@@ -15,7 +15,6 @@ VibeVoice Docker CLI is a containerized text-to-speech application that pipes te
 - **CRITICAL**: Docker builds may fail due to SSL certificate verification in some environments
 - **Local build** (from repository): `docker build -t vibevoice:local .` -- takes 3-5 minutes. NEVER CANCEL. Set timeout to 10+ minutes.
 - **Known Issue**: Build may fail with "certificate verify failed" errors - this is environment-specific and expected in restricted/sandboxed environments
-- **Alternative**: Use pre-built images from Docker Hub when local builds fail
 
 ### Installation Methods
 
