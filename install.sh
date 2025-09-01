@@ -55,28 +55,21 @@ else
         exit 1
     }
     
-    # For remote installation, we need to build the image locally since there's no pre-built image
-    echo "⬇️  Downloading repository files for building..."
-    
-    # Create a temporary directory
-    TEMP_DIR=$(mktemp -d)
-    cleanup() {
-        rm -rf "$TEMP_DIR"
-    }
-    trap cleanup EXIT
-    
-    cd "$TEMP_DIR"
-    
-    # Download necessary files
-    curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/Dockerfile -o Dockerfile
-    curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/vv_tts.py -o vv_tts.py
-    
-    echo "🔨 Building Docker image..."
-    docker build -t vibevoice:local . || {
-        echo "❌ Error: Failed to build Docker image"
+    # For remote installation, pull the pre-built image from Docker Hub
+    echo "⬇️  Pulling Docker image from Docker Hub..."
+    docker pull fwdslsh/vibevoice:latest || {
+        echo "❌ Error: Failed to pull Docker image from Docker Hub"
+        echo "   Please check your internet connection and Docker Hub access"
         exit 1
     }
-    echo "✅ Docker image built successfully"
+    
+    # Tag the pulled image as vibevoice:local for consistency with the wrapper script
+    docker tag fwdslsh/vibevoice:latest vibevoice:local || {
+        echo "❌ Error: Failed to tag Docker image"
+        exit 1
+    }
+    
+    echo "✅ Docker image pulled and tagged successfully"
 fi
 
 # Make the wrapper script executable

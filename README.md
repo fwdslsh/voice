@@ -14,7 +14,7 @@ curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/install.sh | bas
 
 This installer will:
 - Check Docker installation and status
-- Build the VibeVoice Docker image
+- Pull the pre-built VibeVoice Docker image from Docker Hub
 - Install the `vibevoice` command to your PATH
 - Verify installation with an audio test
 
