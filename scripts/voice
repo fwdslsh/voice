@@ -8,7 +8,7 @@ if [[ "${1:-}" == "--update" ]]; then
     # Update the wrapper script
     echo "⬇️  Downloading latest wrapper script..."
     SCRIPT_PATH="$(realpath "$0")"
-    curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/scripts/vibevoice -o "$SCRIPT_PATH.tmp" || {
+    curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/scripts/voice -o "$SCRIPT_PATH.tmp" || {
         echo "❌ Error: Failed to download wrapper script"
         exit 1
     }

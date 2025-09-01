@@ -6,26 +6,26 @@ A tiny, Dockerized CLI that pipes text to Microsoft **VibeVoice** TTS and stream
 
 ```bash
 # A) stdin (streams audio directly to your audio player)
-echo "Hello from VibeVoice." | vibevoice
+echo "Hello from VibeVoice." | voice
 
 # B) literal text 
-vibevoice --text "Shipping the demo is the best spec."
+voice --text "Shipping the demo is the best spec."
 
 # C) save to file instead of playing
-echo "Save this audio" | vibevoice --outfile my_audio.wav
+echo "Save this audio" | voice --outfile my_audio.wav
 
 # D) pipe to file or another program
-echo "Pipe this audio" | vibevoice > output.wav
-echo "Process audio" | vibevoice | ffmpeg -i - -f mp3 output.mp3
+echo "Pipe this audio" | voice > output.wav
+echo "Process audio" | voice | ffmpeg -i - -f mp3 output.mp3
 
 # E) choose model / speaker with command line options
-vibevoice --speaker "Alice" --text "Using a specific speaker."
-vibevoice --speaker "Bob" --text "Different speaker, same model."
+voice --speaker "Alice" --text "Using a specific speaker."
+voice --speaker "Bob" --text "Different speaker, same model."
 
 # F) choose model / speaker with environment variables
 VIBEVOICE_MODEL="microsoft/VibeVoice-1.5B" \
 VIBEVOICE_SPEAKER="Alice" \
-  vibevoice --text "Using environment variables for model and speaker."
+  voice --text "Using environment variables for model and speaker."
 ```
 
 > The default model (microsoft/VibeVoice-1.5B) is preloaded in the container for fast startup.  
@@ -51,7 +51,7 @@ curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/install.sh | bas
 This installer will:
 - Check Docker installation and status
 - Pull the pre-built VibeVoice Docker image from Docker Hub
-- Install the `vibevoice` command to your PATH
+- Install the `voice` command to your PATH
 - Verify installation with an audio test
 
 > **Note**: Docker images are automatically built and published to [Docker Hub](https://hub.docker.com/r/fwdslsh/voice) on each release. See [GitHub Releases](https://github.com/fwdslsh/voice/releases) for version history and release notes.
@@ -61,15 +61,15 @@ This installer will:
 #### Build
 
 ```bash
-docker build -t vibevoice:local .
+docker build -t voice:local .
 ```
 
 #### Install wrapper on your PATH
 
 ```bash
 mkdir -p ~/.local/bin
-cp scripts/vibevoice ~/.local/bin/vibevoice
-chmod +x ~/.local/bin/vibevoice
+cp scripts/voice ~/.local/bin/voice
+chmod +x ~/.local/bin/voice
 # Add ~/.local/bin to your PATH if needed:
 # echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ```
@@ -82,6 +82,6 @@ chmod +x ~/.local/bin/vibevoice
 - A Hugging Face cache is mounted at `~/.cache/huggingface` to persist model data across runs.
 - GPU is auto-enabled when `nvidia-smi` exists; otherwise it runs on CPU (slower).
 - Audio streams directly from container to your audio player - no temporary files by default.
-- You can save to files using `--outfile` or by redirecting stdout: `vibevoice > output.wav`
+- You can save to files using `--outfile` or by redirecting stdout: `voice > output.wav`
 
 
