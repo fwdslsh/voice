@@ -2,11 +2,11 @@ import argparse, os, sys
 from pathlib import Path
 
 def read_input(args):
-    if args.text:
-        return args.text
+    if args.file:
+        return Path(args.file).read_text(encoding="utf-8")
     data = sys.stdin.read()
     if not data.strip():
-        print("No input provided. Use --text or pipe stdin.", file=sys.stderr)
+        print("No input provided. Use --file or pipe stdin.", file=sys.stderr)
         sys.exit(2)
     return data
 
@@ -14,14 +14,8 @@ def main():
     p = argparse.ArgumentParser(description="VibeVoice TTS (stdin -> stdout WAV)")
     p.add_argument("--model", default=os.environ.get("VIBEVOICE_MODEL","microsoft/VibeVoice-1.5B"))
     p.add_argument("--speaker", default=os.environ.get("VIBEVOICE_SPEAKER","Alice"))
-    p.add_argument("--text")
-    p.add_argument("--outfile", help="Optional: write to file instead of stdout")
+    p.add_argument("--file", help="Read text from file instead of stdin")
     args = p.parse_args()
-
-    # ensure /out exists (bound from host) only if writing to file
-    if args.outfile:
-        outpath = Path(args.outfile)
-        outpath.parent.mkdir(parents=True, exist_ok=True)
 
     # get text
     text = read_input(args).strip()
@@ -54,32 +48,22 @@ def main():
     import numpy as np
     arr = wav.squeeze().detach().cpu().numpy().astype("float32")
     
-    if args.outfile:
-        # Write to file
-        try:
-            import soundfile as sf
-            sf.write(str(outpath), arr, sr)
-        except Exception:
-            from scipy.io.wavfile import write as wavwrite
-            wavwrite(str(outpath), sr, (arr * 32767).astype("int16"))
-        print(str(outpath))
-    else:
-        # Write WAV to stdout
-        import io
-        try:
-            import soundfile as sf
-            # Write WAV data to a bytes buffer
-            buf = io.BytesIO()
-            sf.write(buf, arr, sr, format='WAV')
-            buf.seek(0)
-            sys.stdout.buffer.write(buf.getvalue())
-        except Exception:
-            # Fallback to manual WAV format
-            from scipy.io.wavfile import write as wavwrite
-            buf = io.BytesIO()
-            wavwrite(buf, sr, (arr * 32767).astype("int16"))
-            buf.seek(0)
-            sys.stdout.buffer.write(buf.getvalue())
+    # Write WAV to stdout
+    import io
+    try:
+        import soundfile as sf
+        # Write WAV data to a bytes buffer
+        buf = io.BytesIO()
+        sf.write(buf, arr, sr, format='WAV')
+        buf.seek(0)
+        sys.stdout.buffer.write(buf.getvalue())
+    except Exception:
+        # Fallback to manual WAV format
+        from scipy.io.wavfile import write as wavwrite
+        buf = io.BytesIO()
+        wavwrite(buf, sr, (arr * 32767).astype("int16"))
+        buf.seek(0)
+        sys.stdout.buffer.write(buf.getvalue())
 
 if __name__ == "__main__":
     main()

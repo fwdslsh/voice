@@ -7,57 +7,6 @@ if command -v nvidia-smi >/dev/null 2>&1; then
   GPU_FLAG=(--gpus all)
 fi
 
-# Parse args to check if user wants to save to file
-OUTFILE=""
-DOCKER_ARGS=()
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    --outfile)
-      OUTFILE="$2"
-      DOCKER_ARGS+=("$1" "$2")
-      shift 2
-      ;;
-    *)
-      DOCKER_ARGS+=("$1")
-      shift
-      ;;
-  esac
-done
-
-# If user specified outfile, run container and save to that file
-if [[ -n "$OUTFILE" ]]; then
-  # Use absolute path
-  OUTFILE="$(realpath "$OUTFILE")"
-  OUTDIR="$(dirname "$OUTFILE")"
-  OUTNAME="$(basename "$OUTFILE")"
-  
-  # Create directory for output file if needed
-  mkdir -p "$OUTDIR"
-  
-  # shared HF cache speeds up repeated runs
-  HF_CACHE="${HOME}/.cache/huggingface"
-  mkdir -p "$HF_CACHE"
-  
-  # Update docker args to write to /out/filename
-  MODIFIED_ARGS=()
-  for arg in "${DOCKER_ARGS[@]}"; do
-    if [[ "$arg" == "$OUTFILE" ]]; then
-      MODIFIED_ARGS+=("/out/$OUTNAME")
-    else
-      MODIFIED_ARGS+=("$arg")
-    fi
-  done
-  
-  docker run "${GPU_FLAG[@]}" --rm -i \
-    -v "$HF_CACHE":/root/.cache/huggingface \
-    -v "$OUTDIR":/out \
-    vibevoice:local "${MODIFIED_ARGS[@]}"
-  
-  echo "[info] WAV saved to: $OUTFILE"
-  exit 0
-fi
-
-# Default behavior: stream to audio player
 # Pick a host audio player in order of preference
 pick_player() {
   for p in ffplay afplay aplay paplay play; do
@@ -85,7 +34,7 @@ if [[ -n "${PLAYER}" ]]; then
     ffplay)
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        vibevoice:local "${DOCKER_ARGS[@]}" | \
+        vibevoice:local "$@" | \
       ffplay -nodisp -autoexit - >/dev/null 2>&1 || true
       ;;
     afplay)
@@ -96,19 +45,19 @@ if [[ -n "${PLAYER}" ]]; then
       
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        vibevoice:local "${DOCKER_ARGS[@]}" > "$TMPFILE"
+        vibevoice:local "$@" > "$TMPFILE"
       afplay "$TMPFILE" || true
       ;;
     aplay|paplay)
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        vibevoice:local "${DOCKER_ARGS[@]}" | \
+        vibevoice:local "$@" | \
       "$PLAYER" - >/dev/null 2>&1 || true
       ;;
     play)
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        vibevoice:local "${DOCKER_ARGS[@]}" | \
+        vibevoice:local "$@" | \
       play - >/dev/null 2>&1 || true
       ;;
   esac
@@ -116,5 +65,5 @@ else
   # No player found, just output to stdout
   docker run "${GPU_FLAG[@]}" --rm -i \
     -v "$HF_CACHE":/root/.cache/huggingface \
-    vibevoice:local "${DOCKER_ARGS[@]}"
+    vibevoice:local "$@"
 fi
