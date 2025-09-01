@@ -127,6 +127,7 @@ ALWAYS test these scenarios after making changes:
 - `scripts/vibevoice`: Bash wrapper script handling Docker execution and audio routing
 - `install.sh`: Installation script with validation and PATH setup
 - `README.md`: User documentation with usage examples
+- `.github/workflows/docker-publish.yml`: CI/CD workflow for automated Docker publishing and GitHub releases
 
 ### Repository Structure
 ```
@@ -135,6 +136,10 @@ ALWAYS test these scenarios after making changes:
 ├── vv_tts.py               # Main TTS Python script
 ├── scripts/
 │   └── vibevoice           # Wrapper script for Docker execution
+├── .github/
+│   ├── workflows/
+│   │   └── docker-publish.yml  # CI/CD workflow for Docker publishing
+│   └── copilot-instructions.md # Development guidelines
 ├── install.sh              # Automated installer with validation
 ├── README.md               # Documentation
 └── .gitignore             # Excludes caches and audio files
@@ -179,6 +184,23 @@ options:
 - **GPU Support**: Automatically detected and used when NVIDIA Container Toolkit is available
 - **Cache Persistence**: Hugging Face models cached in `~/.cache/huggingface` for faster subsequent runs
 
+### CI/CD and Release Process
+- **Automated Docker Publishing**: GitHub Actions workflow builds and publishes Docker images to Docker Hub on version tags
+- **Version Tags**: Push tags in format `v*` (e.g., `v1.0.0`, `v2.1.3`) to trigger automatic builds
+- **Docker Hub Images**: Published to `fwdslsh/vibevoice` with both `latest` and version-specific tags
+- **GitHub Releases**: Automatically created with release notes containing install script instructions
+- **Multi-Platform**: Docker images built for both `linux/amd64` and `linux/arm64` architectures
+- **Required Secrets**: `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` must be configured in repository secrets
+
+### Release Workflow
+1. Commit changes to main branch
+2. Create and push version tag: `git tag v1.0.0 && git push origin v1.0.0`
+3. GitHub Actions automatically:
+   - Builds Docker image for multiple platforms
+   - Pushes to Docker Hub with `latest` and version tags
+   - Creates GitHub release with installation instructions
+4. Users can immediately install via: `curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/install.sh | bash`
+
 ### Critical Validation Steps
 Before committing changes, ALWAYS:
 1. Test Docker build (if possible in environment): `docker build -t vibevoice:test .`
@@ -186,3 +208,4 @@ Before committing changes, ALWAYS:
 3. Verify audio file creation: `ls -la validation.wav && file validation.wav`
 4. Test streaming (if audio available): `echo "Stream test" | vibevoice`
 5. Validate help output: `vibevoice --help`
+6. Validate GitHub Actions workflow syntax: `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/docker-publish.yml'))"`

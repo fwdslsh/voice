@@ -1,0 +1,126 @@
+name: Build and Publish Docker Image
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0, v2.1.3, etc.
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: fwdslsh/vibevoice
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for creating releases
+      packages: write  # Required for publishing to registries
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          # Remove 'v' prefix from tag to get version number
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          # VibeVoice Docker CLI ${{ steps.version.outputs.tag }}
+          
+          This release includes the VibeVoice Docker CLI with Microsoft VibeVoice TTS support.
+          
+          ## 🐳 Docker Image
+          
+          The Docker image for this release is available at:
+          - `${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}`
+          - `${{ env.IMAGE_NAME }}:latest` (also updated)
+          
+          ## 📦 Quick Installation
+          
+          Install VibeVoice Docker CLI with a single command:
+          
+          ```bash
+          curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/install.sh | bash
+          ```
+          
+          This installer will:
+          - Check Docker installation and status
+          - Pull the pre-built VibeVoice Docker image from Docker Hub
+          - Install the `vibevoice` command to your PATH
+          - Verify installation with an audio test
+          
+          ## 🎯 Usage Examples
+          
+          ```bash
+          # Stream audio directly to your audio player
+          echo "Hello from VibeVoice!" | vibevoice
+          
+          # Use specific text and speaker
+          vibevoice --speaker Alice --text "Hello from Alice"
+          
+          # Save audio to file
+          vibevoice --text "Save this audio" --output audio.wav
+          
+          # Read from file
+          vibevoice --input mytext.txt --output result.wav
+          
+          # Update to latest version
+          vibevoice --update
+          ```
+          
+          ## 📋 Requirements
+          
+          - Docker (required)
+          - Audio player for direct playback: `ffplay`, `aplay`, `paplay`, `play`, or `afplay`
+          - Optional: NVIDIA GPU + NVIDIA Container Toolkit for faster inference
+          
+          ## 🔗 Links
+          
+          - [Repository](https://github.com/fwdslsh/voice)
+          - [Docker Hub](https://hub.docker.com/r/fwdslsh/vibevoice)
+          - [Installation Guide](https://github.com/fwdslsh/voice#installation)
+          EOF
+          
+          # Set output for use in release creation
+          echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          release_name: "VibeVoice Docker CLI ${{ steps.version.outputs.tag }}"
+          body_path: ${{ steps.release_notes.outputs.notes_file }}
+          draft: false
+          prerelease: false
