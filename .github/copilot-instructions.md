@@ -21,7 +21,7 @@ VibeVoice Docker CLI is a containerized text-to-speech application that pipes te
 #### Method 1: Local Installation (if in repository)
 ```bash
 # Build Docker image locally
-docker build -t fwdslsh/vibevoice:latest .
+docker build -t fwdslsh/voice:latest .
 # Install wrapper script
 mkdir -p ~/.local/bin
 cp scripts/vibevoice ~/.local/bin/vibevoice
@@ -187,7 +187,7 @@ options:
 ### CI/CD and Release Process
 - **Automated Docker Publishing**: GitHub Actions workflow builds and publishes Docker images to Docker Hub on version tags
 - **Version Tags**: Push tags in format `v*` (e.g., `v1.0.0`, `v2.1.3`) to trigger automatic builds
-- **Docker Hub Images**: Published to `fwdslsh/vibevoice` with both `latest` and version-specific tags
+- **Docker Hub Images**: Published to `fwdslsh/voice` with both `latest` and version-specific tags
 - **GitHub Releases**: Automatically created with release notes containing install script instructions
 - **Multi-Platform**: Docker images built for both `linux/amd64` and `linux/arm64` architectures
 - **Required Secrets**: `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` must be configured in repository secrets

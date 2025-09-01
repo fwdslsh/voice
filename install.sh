@@ -36,7 +36,7 @@ if [[ -f "scripts/vibevoice" && -f "Dockerfile" && -f "vv_tts.py" ]]; then
     
     # Build the Docker image locally
     echo "🔨 Building Docker image..."
-    docker build -t fwdslsh/vibevoice:latest . || {
+    docker build -t fwdslsh/voice:latest . || {
         echo "❌ Error: Failed to build Docker image"
         exit 1
     }
@@ -57,7 +57,7 @@ else
     
     # For remote installation, pull the pre-built image from Docker Hub
     echo "⬇️  Pulling Docker image from Docker Hub..."
-    docker pull fwdslsh/vibevoice:latest || {
+    docker pull fwdslsh/voice:latest || {
         echo "❌ Error: Failed to pull Docker image from Docker Hub"
         echo "   Please check your internet connection and Docker Hub access"
         exit 1
