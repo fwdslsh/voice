@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Decide if GPU is available (Linux + NVIDIA)
+GPU_FLAG=()
+if command -v nvidia-smi >/dev/null 2>&1; then
+  GPU_FLAG=(--gpus all)
+fi
+
+# Pick a host audio player in order of preference
+pick_player() {
+  for p in ffplay afplay aplay paplay play; do
+    if command -v "$p" >/dev/null 2>&1; then
+      echo "$p"
+      return 0
+    fi
+  done
+  echo ""
+  return 1
+}
+
+PLAYER="$(pick_player || true)"
+if [[ -z "${PLAYER}" ]]; then
+  echo "[note] No audio player found on host (ffplay/afplay/aplay/paplay/play). Will just produce a WAV."
+fi
+
+# temp output dir on host
+OUTDIR="$(mktemp -d -t vibevoice_XXXXXX)"
+cleanup() { rm -rf "$OUTDIR"; }
+trap cleanup EXIT
+
+# shared HF cache speeds up repeated runs
+HF_CACHE="${HOME}/.cache/huggingface"
+mkdir -p "$HF_CACHE"
+
+# run container; stdin is forwarded with -i; args forwarded too
+docker run "${GPU_FLAG[@]}" --rm -i \
+  -v "$HF_CACHE":/root/.cache/huggingface \
+  -v "$OUTDIR":/out \
+  vibevoice:local "$@"
+
+WAV="$OUTDIR/out.wav"
+if [[ -f "$WAV" ]]; then
+  if [[ -n "${PLAYER}" ]]; then
+    if [[ "$PLAYER" == "ffplay" ]]; then
+      ffplay -nodisp -autoexit "$WAV" >/dev/null 2>&1 || true
+    else
+      "$PLAYER" "$WAV" >/dev/null 2>&1 || true
+    fi
+  else
+    echo "[info] WAV at: $WAV"
+    # keep it so the user can grab the file
+    trap - EXIT
+    exit 0
+  fi
+else
+  echo "[error] No output WAV produced." >&2
+  exit 1
+fi
+# if played successfully, temp dir auto-removed by trap
