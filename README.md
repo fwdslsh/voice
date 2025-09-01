@@ -2,6 +2,26 @@
 
 A tiny, Dockerized CLI that pipes text to Microsoft **VibeVoice** TTS and streams audio directly to your audio player or stdout.
 
+## Installation
+
+### Quick Installation (Recommended)
+
+Install with a single command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/install.sh | bash
+```
+
+This installer will:
+- Check Docker installation and status
+- Build the VibeVoice Docker image
+- Install the `vibevoice` command to your PATH
+- Verify installation with an audio test
+
+### Manual Installation
+
+If you prefer to install manually:
+
 ## Requirements
 - Docker
 - (Optional) NVIDIA GPU + NVIDIA Container Toolkit (Linux) for fast inference
@@ -20,6 +40,7 @@ docker build -t vibevoice:local .
 ```bash
 mkdir -p ~/.local/bin
 cp scripts/vibevoice ~/.local/bin/vibevoice
+chmod +x ~/.local/bin/vibevoice
 # Add ~/.local/bin to your PATH if needed:
 # echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ```
@@ -40,10 +61,14 @@ echo "Save this audio" | vibevoice --outfile my_audio.wav
 echo "Pipe this audio" | vibevoice > output.wav
 echo "Process audio" | vibevoice | ffmpeg -i - -f mp3 output.mp3
 
-# E) choose model / speaker
+# E) choose model / speaker with command line options
+vibevoice --speaker "Alice" --text "Using a specific speaker."
+vibevoice --speaker "Bob" --text "Different speaker, same model."
+
+# F) choose model / speaker with environment variables
 VIBEVOICE_MODEL="microsoft/VibeVoice-1.5B" \
 VIBEVOICE_SPEAKER="Alice" \
-  vibevoice --text "Using a specific model and speaker."
+  vibevoice --text "Using environment variables for model and speaker."
 ```
 
 > The default model (microsoft/VibeVoice-1.5B) is preloaded in the container for fast startup.  
