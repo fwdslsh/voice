@@ -18,7 +18,7 @@ if [[ "${1:-}" == "--update" ]]; then
     
     # Update the Docker image
     echo "⬇️  Pulling latest Docker image..."
-    docker pull fwdslsh/vibevoice:latest || {
+    docker pull fwdslsh/voice:latest || {
         echo "❌ Error: Failed to pull Docker image"
         exit 1
     }
@@ -88,7 +88,7 @@ if [[ -n "$OUTFILE" ]]; then
   docker run "${GPU_FLAG[@]}" --rm -i \
     -v "$HF_CACHE":/root/.cache/huggingface \
     -v "$OUTDIR":/output \
-    fwdslsh/vibevoice:latest "${ARGS[@]}"
+    fwdslsh/voice:latest "${ARGS[@]}"
   exit 0
 fi
 
@@ -103,7 +103,7 @@ if [[ -n "${PLAYER}" ]]; then
     ffplay)
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        fwdslsh/vibevoice:latest "$@" | \
+        fwdslsh/voice:latest "$@" | \
       ffplay -nodisp -autoexit - >/dev/null 2>&1 || true
       ;;
     afplay)
@@ -114,19 +114,19 @@ if [[ -n "${PLAYER}" ]]; then
       
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        fwdslsh/vibevoice:latest "$@" > "$TMPFILE"
+        fwdslsh/voice:latest "$@" > "$TMPFILE"
       afplay "$TMPFILE" || true
       ;;
     aplay|paplay)
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        fwdslsh/vibevoice:latest "$@" | \
+        fwdslsh/voice:latest "$@" | \
       "$PLAYER" - >/dev/null 2>&1 || true
       ;;
     play)
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        fwdslsh/vibevoice:latest "$@" | \
+        fwdslsh/voice:latest "$@" | \
       play - >/dev/null 2>&1 || true
       ;;
   esac
@@ -134,5 +134,5 @@ else
   # No player found, just output to stdout
   docker run "${GPU_FLAG[@]}" --rm -i \
     -v "$HF_CACHE":/root/.cache/huggingface \
-    fwdslsh/vibevoice:latest "$@"
+    fwdslsh/voice:latest "$@"
 fi

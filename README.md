@@ -54,7 +54,7 @@ This installer will:
 - Install the `vibevoice` command to your PATH
 - Verify installation with an audio test
 
-> **Note**: Docker images are automatically built and published to [Docker Hub](https://hub.docker.com/r/fwdslsh/vibevoice) on each release. See [GitHub Releases](https://github.com/fwdslsh/voice/releases) for version history and release notes.
+> **Note**: Docker images are automatically built and published to [Docker Hub](https://hub.docker.com/r/fwdslsh/voice) on each release. See [GitHub Releases](https://github.com/fwdslsh/voice/releases) for version history and release notes.
 
 ### Manual Installation
 
