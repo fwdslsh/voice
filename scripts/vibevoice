@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Check if --outfile is specified
+OUTFILE=""
+for arg in "$@"; do
+  if [[ "$arg" == --outfile ]]; then
+    # Next argument is the file path
+    shift_next=true
+    continue
+  fi
+  if [[ "${shift_next:-false}" == "true" ]]; then
+    OUTFILE="$arg"
+    break
+  fi
+done
+
 # Decide if GPU is available (Linux + NVIDIA)
 GPU_FLAG=()
 if command -v nvidia-smi >/dev/null 2>&1; then
@@ -19,14 +33,42 @@ pick_player() {
   return 1
 }
 
+# shared HF cache speeds up repeated runs
+HF_CACHE="${HOME}/.cache/huggingface"
+mkdir -p "$HF_CACHE"
+
+# Handle --outfile case differently
+if [[ -n "$OUTFILE" ]]; then
+  # Mount the directory containing the output file
+  OUTDIR="$(dirname "$(realpath "$OUTFILE")")"
+  OUTNAME="$(basename "$OUTFILE")"
+  
+  # Update the --outfile argument to use the container path
+  ARGS=()
+  replace_next=false
+  for arg in "$@"; do
+    if [[ "$replace_next" == "true" ]]; then
+      ARGS+=("/output/$OUTNAME")
+      replace_next=false
+    elif [[ "$arg" == "--outfile" ]]; then
+      ARGS+=("$arg")
+      replace_next=true
+    else
+      ARGS+=("$arg")
+    fi
+  done
+  
+  docker run "${GPU_FLAG[@]}" --rm -i \
+    -v "$HF_CACHE":/root/.cache/huggingface \
+    -v "$OUTDIR":/output \
+    vibevoice:local "${ARGS[@]}"
+  exit 0
+fi
+
 PLAYER="$(pick_player || true)"
 if [[ -z "${PLAYER}" ]]; then
   echo "[note] No audio player found on host (ffplay/afplay/aplay/paplay/play). Outputting WAV to stdout."
 fi
-
-# shared HF cache speeds up repeated runs
-HF_CACHE="${HOME}/.cache/huggingface"
-mkdir -p "$HF_CACHE"
 
 # run container and pipe output
 if [[ -n "${PLAYER}" ]]; then
