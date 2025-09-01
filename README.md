@@ -2,51 +2,6 @@
 
 A tiny, Dockerized CLI that pipes text to Microsoft **VibeVoice** TTS and streams audio directly to your audio player or stdout.
 
-## Installation
-
-### Quick Installation (Recommended)
-
-Install with a single command:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/install.sh | bash
-```
-
-This installer will:
-- Check Docker installation and status
-- Pull the pre-built VibeVoice Docker image from Docker Hub
-- Install the `vibevoice` command to your PATH
-- Verify installation with an audio test
-
-> **Note**: Docker images are automatically built and published to [Docker Hub](https://hub.docker.com/r/fwdslsh/vibevoice) on each release. See [GitHub Releases](https://github.com/fwdslsh/voice/releases) for version history and release notes.
-
-### Manual Installation
-
-If you prefer to install manually:
-
-## Requirements
-- Docker
-- (Optional) NVIDIA GPU + NVIDIA Container Toolkit (Linux) for fast inference
-- A host audio player, one of:
-  - Linux: `ffplay` (ffmpeg), `aplay`, `paplay`, or `play` (sox)
-  - macOS: `afplay` (built-in) or `ffplay`
-
-## Build
-
-```bash
-docker build -t vibevoice:local .
-```
-
-### Install wrapper on your PATH
-
-```bash
-mkdir -p ~/.local/bin
-cp scripts/vibevoice ~/.local/bin/vibevoice
-chmod +x ~/.local/bin/vibevoice
-# Add ~/.local/bin to your PATH if needed:
-# echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-```
-
 ## Usage
 
 ```bash
@@ -76,6 +31,50 @@ VIBEVOICE_SPEAKER="Alice" \
 > The default model (microsoft/VibeVoice-1.5B) is preloaded in the container for fast startup.  
 > If no audio player is found, WAV data is output to stdout so you can pipe it to files or other programs.
 
+## Requirements
+- Docker
+- (Optional) NVIDIA GPU + NVIDIA Container Toolkit (Linux) for fast inference
+- A host audio player, one of:
+  - Linux: `ffplay` (ffmpeg), `aplay`, `paplay`, or `play` (sox)
+  - macOS: `afplay` (built-in) or `ffplay`
+
+## Installation
+
+### Quick Installation (Recommended)
+
+Install with a single command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/install.sh | bash
+```
+
+This installer will:
+- Check Docker installation and status
+- Pull the pre-built VibeVoice Docker image from Docker Hub
+- Install the `vibevoice` command to your PATH
+- Verify installation with an audio test
+
+> **Note**: Docker images are automatically built and published to [Docker Hub](https://hub.docker.com/r/fwdslsh/vibevoice) on each release. See [GitHub Releases](https://github.com/fwdslsh/voice/releases) for version history and release notes.
+
+### Manual Installation
+
+#### Build
+
+```bash
+docker build -t vibevoice:local .
+```
+
+#### Install wrapper on your PATH
+
+```bash
+mkdir -p ~/.local/bin
+cp scripts/vibevoice ~/.local/bin/vibevoice
+chmod +x ~/.local/bin/vibevoice
+# Add ~/.local/bin to your PATH if needed:
+# echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+```
+
+
 ## Notes
 
 - Everything runs in Docker; your host only needs an audio player.
@@ -85,26 +84,4 @@ VIBEVOICE_SPEAKER="Alice" \
 - Audio streams directly from container to your audio player - no temporary files by default.
 - You can save to files using `--outfile` or by redirecting stdout: `vibevoice > output.wav`
 
----
 
-## Quick start (copy/paste)
-
-```bash
-# 1) create the project
-mkdir -p vibevoice-docker-cli/scripts
-cd vibevoice-docker-cli
-
-# 2) create files from the snippets above (Dockerfile, vv_tts.py, scripts/vibevoice, .gitignore, README.md)
-
-# 3) build
-docker build -t vibevoice:local .
-
-# 4) install wrapper
-mkdir -p ~/.local/bin
-cp scripts/vibevoice ~/.local/bin/vibevoice
-chmod +x ~/.local/bin/vibevoice
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-
-# 5) run
-echo "This streams directly to your audio player." | vibevoice
-```
