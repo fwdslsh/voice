@@ -1,0 +1,6 @@
+# caches / temps
+/out/
+*.wav
+.DS_Store
+.idea/
+.vscode/
