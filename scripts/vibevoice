@@ -1,10 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Check if --outfile is specified
+# Handle --update argument
+if [[ "${1:-}" == "--update" ]]; then
+    echo "🔄 Updating VibeVoice..."
+    
+    # Update the wrapper script
+    echo "⬇️  Downloading latest wrapper script..."
+    SCRIPT_PATH="$(realpath "$0")"
+    curl -fsSL https://raw.githubusercontent.com/fwdslsh/voice/main/scripts/vibevoice -o "$SCRIPT_PATH.tmp" || {
+        echo "❌ Error: Failed to download wrapper script"
+        exit 1
+    }
+    chmod +x "$SCRIPT_PATH.tmp"
+    mv "$SCRIPT_PATH.tmp" "$SCRIPT_PATH"
+    echo "✅ Wrapper script updated"
+    
+    # Update the Docker image
+    echo "⬇️  Pulling latest Docker image..."
+    docker pull fwdslsh/vibevoice:latest || {
+        echo "❌ Error: Failed to pull Docker image"
+        exit 1
+    }
+    echo "✅ Docker image updated"
+    
+    echo "🎉 Update completed successfully!"
+    exit 0
+fi
+
+# Check if --output is specified
 OUTFILE=""
 for arg in "$@"; do
-  if [[ "$arg" == --outfile ]]; then
+  if [[ "$arg" == --output ]]; then
     # Next argument is the file path
     shift_next=true
     continue
@@ -37,20 +64,20 @@ pick_player() {
 HF_CACHE="${HOME}/.cache/huggingface"
 mkdir -p "$HF_CACHE"
 
-# Handle --outfile case differently
+# Handle --output case differently
 if [[ -n "$OUTFILE" ]]; then
   # Mount the directory containing the output file
   OUTDIR="$(dirname "$(realpath "$OUTFILE")")"
   OUTNAME="$(basename "$OUTFILE")"
   
-  # Update the --outfile argument to use the container path
+  # Update the --output argument to use the container path
   ARGS=()
   replace_next=false
   for arg in "$@"; do
     if [[ "$replace_next" == "true" ]]; then
       ARGS+=("/output/$OUTNAME")
       replace_next=false
-    elif [[ "$arg" == "--outfile" ]]; then
+    elif [[ "$arg" == "--output" ]]; then
       ARGS+=("$arg")
       replace_next=true
     else
@@ -61,7 +88,7 @@ if [[ -n "$OUTFILE" ]]; then
   docker run "${GPU_FLAG[@]}" --rm -i \
     -v "$HF_CACHE":/root/.cache/huggingface \
     -v "$OUTDIR":/output \
-    vibevoice:local "${ARGS[@]}"
+    fwdslsh/vibevoice:latest "${ARGS[@]}"
   exit 0
 fi
 
@@ -76,7 +103,7 @@ if [[ -n "${PLAYER}" ]]; then
     ffplay)
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        vibevoice:local "$@" | \
+        fwdslsh/vibevoice:latest "$@" | \
       ffplay -nodisp -autoexit - >/dev/null 2>&1 || true
       ;;
     afplay)
@@ -87,19 +114,19 @@ if [[ -n "${PLAYER}" ]]; then
       
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        vibevoice:local "$@" > "$TMPFILE"
+        fwdslsh/vibevoice:latest "$@" > "$TMPFILE"
       afplay "$TMPFILE" || true
       ;;
     aplay|paplay)
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        vibevoice:local "$@" | \
+        fwdslsh/vibevoice:latest "$@" | \
       "$PLAYER" - >/dev/null 2>&1 || true
       ;;
     play)
       docker run "${GPU_FLAG[@]}" --rm -i \
         -v "$HF_CACHE":/root/.cache/huggingface \
-        vibevoice:local "$@" | \
+        fwdslsh/vibevoice:latest "$@" | \
       play - >/dev/null 2>&1 || true
       ;;
   esac
@@ -107,5 +134,5 @@ else
   # No player found, just output to stdout
   docker run "${GPU_FLAG[@]}" --rm -i \
     -v "$HF_CACHE":/root/.cache/huggingface \
-    vibevoice:local "$@"
+    fwdslsh/vibevoice:latest "$@"
 fi

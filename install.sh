@@ -36,7 +36,7 @@ if [[ -f "scripts/vibevoice" && -f "Dockerfile" && -f "vv_tts.py" ]]; then
     
     # Build the Docker image locally
     echo "🔨 Building Docker image..."
-    docker build -t vibevoice:local . || {
+    docker build -t fwdslsh/vibevoice:latest . || {
         echo "❌ Error: Failed to build Docker image"
         exit 1
     }
@@ -63,13 +63,7 @@ else
         exit 1
     }
     
-    # Tag the pulled image as vibevoice:local for consistency with the wrapper script
-    docker tag fwdslsh/vibevoice:latest vibevoice:local || {
-        echo "❌ Error: Failed to tag Docker image"
-        exit 1
-    }
-    
-    echo "✅ Docker image pulled and tagged successfully"
+    echo "✅ Docker image pulled successfully"
 fi
 
 # Make the wrapper script executable
@@ -117,7 +111,7 @@ cleanup_test() {
 }
 trap cleanup_test EXIT
 
-if "$INSTALL_DIR/vibevoice" --text "VibeVoice installation successful!" --outfile "$TEST_OUTPUT" 2>/dev/null; then
+if "$INSTALL_DIR/vibevoice" --text "VibeVoice installation successful!" --output "$TEST_OUTPUT" 2>/dev/null; then
     echo "✅ Installation test passed (audio file created)"
     
     # Try to play the audio if an audio player is available
@@ -142,6 +136,8 @@ echo "Usage examples:"
 echo "  echo 'Hello from VibeVoice!' | vibevoice"
 echo "  vibevoice --text 'Hello world'"
 echo "  vibevoice --speaker Alice --text 'Hello from Alice'"
-echo "  vibevoice --text 'Save this' --outfile output.wav"
+echo "  vibevoice --text 'Save this' --output output.wav"
+echo "  vibevoice --input mytext.txt --output result.wav"
+echo "  vibevoice --update    # Update to latest version"
 echo ""
 echo "For more information, visit: https://github.com/fwdslsh/voice"
