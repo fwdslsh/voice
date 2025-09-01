@@ -1,6 +1,6 @@
 # VibeVoice Docker CLI
 
-A tiny, Dockerized CLI that pipes text to Microsoft **VibeVoice** TTS, writes a WAV inside the container, then your host plays it and deletes it.
+A tiny, Dockerized CLI that pipes text to Microsoft **VibeVoice** TTS and streams audio directly to your audio player or stdout.
 
 ## Requirements
 - Docker
@@ -27,28 +27,36 @@ cp scripts/vibevoice ~/.local/bin/vibevoice
 ## Usage
 
 ```bash
-# A) stdin
+# A) stdin (streams audio directly to your audio player)
 echo "Hello from VibeVoice." | vibevoice
 
-# B) read a text file
-vibevoice --file notes.txt
-
-# C) literal text
+# B) literal text 
 vibevoice --text "Shipping the demo is the best spec."
 
-# D) choose model / speaker
+# C) save to file instead of playing
+echo "Save this audio" | vibevoice --outfile my_audio.wav
+
+# D) pipe to file or another program
+echo "Pipe this audio" | vibevoice > output.wav
+echo "Process audio" | vibevoice | ffmpeg -i - -f mp3 output.mp3
+
+# E) choose model / speaker
 VIBEVOICE_MODEL="microsoft/VibeVoice-1.5B" \
 VIBEVOICE_SPEAKER="Alice" \
   vibevoice --text "Using a specific model and speaker."
 ```
 
-> If no host audio player is found, the script prints the WAV path and keeps the temp folder so you can inspect it.
+> The default model (microsoft/VibeVoice-1.5B) is preloaded in the container for fast startup.  
+> If no audio player is found, WAV data is output to stdout so you can pipe it to files or other programs.
 
 ## Notes
 
 - Everything runs in Docker; your host only needs an audio player.
-- A Hugging Face cache is mounted at `~/.cache/huggingface` to avoid re-downloading models each run.
+- The default model (microsoft/VibeVoice-1.5B) is preloaded during build for fast startup.
+- A Hugging Face cache is mounted at `~/.cache/huggingface` to persist model data across runs.
 - GPU is auto-enabled when `nvidia-smi` exists; otherwise it runs on CPU (slower).
+- Audio streams directly from container to your audio player - no temporary files by default.
+- You can save to files using `--outfile` or by redirecting stdout: `vibevoice > output.wav`
 
 ---
 
@@ -71,5 +79,5 @@ chmod +x ~/.local/bin/vibevoice
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
 # 5) run
-echo "This is fully isolated via Docker." | vibevoice
+echo "This streams directly to your audio player." | vibevoice
 ```
