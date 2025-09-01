@@ -12,6 +12,9 @@ RUN git clone https://github.com/microsoft/VibeVoice.git
 RUN pip install -U pip setuptools wheel && \
     pip install -e VibeVoice soundfile scipy
 
+# Predownload the default model to cache for faster startup
+RUN python -c "from vibevoice.processor.vibevoice_processor import VibeVoiceProcessor; from vibevoice.modular.modeling_vibevoice_inference import VibeVoiceForConditionalGenerationInference; VibeVoiceProcessor.from_pretrained('microsoft/VibeVoice-1.5B'); VibeVoiceForConditionalGenerationInference.from_pretrained('microsoft/VibeVoice-1.5B', torch_dtype='auto')"
+
 # Copy our tiny entrypoint
 COPY vv_tts.py /usr/local/bin/vv_tts.py
 

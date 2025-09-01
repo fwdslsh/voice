@@ -21,40 +21,49 @@ pick_player() {
 
 PLAYER="$(pick_player || true)"
 if [[ -z "${PLAYER}" ]]; then
-  echo "[note] No audio player found on host (ffplay/afplay/aplay/paplay/play). Will just produce a WAV."
+  echo "[note] No audio player found on host (ffplay/afplay/aplay/paplay/play). Outputting WAV to stdout."
 fi
-
-# temp output dir on host
-OUTDIR="$(mktemp -d -t vibevoice_XXXXXX)"
-cleanup() { rm -rf "$OUTDIR"; }
-trap cleanup EXIT
 
 # shared HF cache speeds up repeated runs
 HF_CACHE="${HOME}/.cache/huggingface"
 mkdir -p "$HF_CACHE"
 
-# run container; stdin is forwarded with -i; args forwarded too
-docker run "${GPU_FLAG[@]}" --rm -i \
-  -v "$HF_CACHE":/root/.cache/huggingface \
-  -v "$OUTDIR":/out \
-  vibevoice:local "$@"
-
-WAV="$OUTDIR/out.wav"
-if [[ -f "$WAV" ]]; then
-  if [[ -n "${PLAYER}" ]]; then
-    if [[ "$PLAYER" == "ffplay" ]]; then
-      ffplay -nodisp -autoexit "$WAV" >/dev/null 2>&1 || true
-    else
-      "$PLAYER" "$WAV" >/dev/null 2>&1 || true
-    fi
-  else
-    echo "[info] WAV at: $WAV"
-    # keep it so the user can grab the file
-    trap - EXIT
-    exit 0
-  fi
+# run container and pipe output
+if [[ -n "${PLAYER}" ]]; then
+  case "$PLAYER" in
+    ffplay)
+      docker run "${GPU_FLAG[@]}" --rm -i \
+        -v "$HF_CACHE":/root/.cache/huggingface \
+        vibevoice:local "$@" | \
+      ffplay -nodisp -autoexit - >/dev/null 2>&1 || true
+      ;;
+    afplay)
+      # afplay needs a file, so we'll use a temp file
+      TMPFILE="$(mktemp --suffix=.wav)"
+      cleanup_tmp() { rm -f "$TMPFILE"; }
+      trap cleanup_tmp EXIT
+      
+      docker run "${GPU_FLAG[@]}" --rm -i \
+        -v "$HF_CACHE":/root/.cache/huggingface \
+        vibevoice:local "$@" > "$TMPFILE"
+      afplay "$TMPFILE" || true
+      ;;
+    aplay|paplay)
+      docker run "${GPU_FLAG[@]}" --rm -i \
+        -v "$HF_CACHE":/root/.cache/huggingface \
+        vibevoice:local "$@" | \
+      "$PLAYER" - >/dev/null 2>&1 || true
+      ;;
+    play)
+      docker run "${GPU_FLAG[@]}" --rm -i \
+        -v "$HF_CACHE":/root/.cache/huggingface \
+        vibevoice:local "$@" | \
+      play - >/dev/null 2>&1 || true
+      ;;
+  esac
 else
-  echo "[error] No output WAV produced." >&2
-  exit 1
+  # No player found, just output to stdout
+  docker run "${GPU_FLAG[@]}" --rm -i \
+    -v "$HF_CACHE":/root/.cache/huggingface \
+    vibevoice:local "$@"
 fi
-# if played successfully, temp dir auto-removed by trap
