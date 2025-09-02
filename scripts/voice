@@ -42,11 +42,8 @@ for arg in "$@"; do
   fi
 done
 
-# Decide if GPU is available (Linux + NVIDIA)
-GPU_FLAG=()
-if command -v nvidia-smi >/dev/null 2>&1; then
-  GPU_FLAG=(--gpus all)
-fi
+# Standard Docker arguments for NVIDIA PyTorch container
+DOCKER_ARGS=(--privileged --net=host --ipc=host --ulimit memlock=-1:-1 --ulimit stack=-1:-1 --gpus all --rm -i)
 
 # Pick a host audio player in order of preference
 pick_player() {
@@ -85,7 +82,7 @@ if [[ -n "$OUTFILE" ]]; then
     fi
   done
   
-  docker run "${GPU_FLAG[@]}" --rm -i \
+  docker run "${DOCKER_ARGS[@]}" \
     -v "$HF_CACHE":/root/.cache/huggingface \
     -v "$OUTDIR":/output \
     fwdslsh/voice:latest "${ARGS[@]}"
@@ -101,7 +98,7 @@ fi
 if [[ -n "${PLAYER}" ]]; then
   case "$PLAYER" in
     ffplay)
-      docker run "${GPU_FLAG[@]}" --rm -i \
+      docker run "${DOCKER_ARGS[@]}" \
         -v "$HF_CACHE":/root/.cache/huggingface \
         fwdslsh/voice:latest "$@" | \
       ffplay -nodisp -autoexit - >/dev/null 2>&1 || true
@@ -112,19 +109,19 @@ if [[ -n "${PLAYER}" ]]; then
       cleanup_tmp() { rm -f "$TMPFILE"; }
       trap cleanup_tmp EXIT
       
-      docker run "${GPU_FLAG[@]}" --rm -i \
+      docker run "${DOCKER_ARGS[@]}" \
         -v "$HF_CACHE":/root/.cache/huggingface \
         fwdslsh/voice:latest "$@" > "$TMPFILE"
       afplay "$TMPFILE" || true
       ;;
     aplay|paplay)
-      docker run "${GPU_FLAG[@]}" --rm -i \
+      docker run "${DOCKER_ARGS[@]}" \
         -v "$HF_CACHE":/root/.cache/huggingface \
         fwdslsh/voice:latest "$@" | \
       "$PLAYER" - >/dev/null 2>&1 || true
       ;;
     play)
-      docker run "${GPU_FLAG[@]}" --rm -i \
+      docker run "${DOCKER_ARGS[@]}" \
         -v "$HF_CACHE":/root/.cache/huggingface \
         fwdslsh/voice:latest "$@" | \
       play - >/dev/null 2>&1 || true
@@ -132,7 +129,7 @@ if [[ -n "${PLAYER}" ]]; then
   esac
 else
   # No player found, just output to stdout
-  docker run "${GPU_FLAG[@]}" --rm -i \
+  docker run "${DOCKER_ARGS[@]}" \
     -v "$HF_CACHE":/root/.cache/huggingface \
     fwdslsh/voice:latest "$@"
 fi
