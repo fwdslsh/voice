@@ -1,5 +1,6 @@
-# Minimal CUDA-enabled PyTorch runtime. Works on CPU too (slower).
-FROM pytorch/pytorch:2.4.0-cuda12.1-cudnn9-runtime
+# NVIDIA PyTorch Container 24.07 / 24.10 / 24.12 verified. 
+# Later versions are also compatible.
+FROM nvcr.io/nvidia/pytorch:24.07-py3
 
 # System deps for audio and git
 RUN apt-get update && \
