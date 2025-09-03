@@ -1,8 +1,10 @@
 # caches / temps
 /out/
 *.wav
+*.mp3
 .DS_Store
 .idea/
-.vscode/
 __pycache__/
 *.pyc
+.venv
+voice.egg-info/
